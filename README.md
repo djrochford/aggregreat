@@ -1,2 +1,2 @@
-# pipeline
-A library for creating Mongo aggregation pipelines
+# Aggregreat
+A library for creating Mongo aggregation pipelines.
