@@ -1,26 +1,17 @@
 """
-Tests for the Pipeline class.
+Tests for validation procedure.
 """
 
 from datetime import date, datetime, timedelta
-import pytest
 
+from pytest import raises
 from bson.objectid import ObjectId
 
-from pipeline import Pipeline
-from aggregation_types import AggregateTypeError
+from validate import is_valid_pipeline, AggregreatTypeError
 
-def test_pipeline_instantiation_and_pop():
+def test_match_stage():
     """
-    Test instantiation of Pipeline class, and the pop-method.
-    """
-    pipey = Pipeline()
-    assert pipey.pop() == []
-
-def test_good_queries():
-    """
-    Test Pipeline's `match` method, and direct Pipeline instantion on `$match` dicts,
-    with well-formed queries.
+    Tests $match stages
     """
     good_queries = [
         #BSON primitives
@@ -67,24 +58,19 @@ def test_good_queries():
             "$gt": datetime.now() - timedelta(days=1),
             "$lte": datetime.now()
         }}}}
-
     ]
 
     for query in good_queries:
-        assert Pipeline().match(query=query).pop() == [{"$match": query}]
-        assert Pipeline([{"$match": query}]).pop() == [{"$match": query}]
+        assert is_valid_pipeline([{"$match": query}]) is True
 
-def test_bad_queries():
-    """
-    Test that Pipeline raises an exception, and the right one, for ill-formed queries.
-    """
-    bad_primitive = date.today()
-    with pytest.raises(AggregateTypeError) as err:
-        Pipeline().match(query={"someField": bad_primitive})
-        assert err.value == (f"Expecting {bad_primitive} to have a bson-equivalent type, but it " +
-                             f"has type {type(bad_primitive)}.")
+    bad_bson_value = {"someField": date}
+    with raises(AggregreatTypeError) as err:
+        is_valid_pipeline([{"$match": bad_bson_value}])
+        assert err.value == (f"Expected {bad_bson_value} to be a BSON value, but it has " +
+                             f"non-valid type {type(bad_bson_value)}.")
 
-    bad_object = {3: "dog"}
-    with pytest.raises(AggregateTypeError) as err:
-        Pipeline().match(query={"someField": bad_object})
-        assert err.value == "something"
+    mixed_dollar_keys = {"someField": {"$in": ["dog, cat"], "tree": 2}}
+    with raises(AggregreatTypeError) as err:
+        is_valid_pipeline([{"$match": mixed_dollar_keys}])
+        assert err.value == (f"Bad dictionary {mixed_dollar_keys}. Cannot mix operator keys " +
+                             "(beginning with '$') with non-operator keys.")
