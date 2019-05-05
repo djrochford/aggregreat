@@ -38,6 +38,11 @@ def test_stage():
     assert str(err.value) == (f"Expected {bad_stage_key_values} to be a stage expression, and " +
                               "hence have exactly one key-value pair.")
 
+    bad_stage_tag = "$smatch"
+    with raises(AggregreatTypeError) as err:
+        is_valid_pipeline([{bad_stage_tag: {"someField": True}}])
+    assert str(err.value) == f"{bad_stage_tag} is not a valid stage-type."
+
 def test_match_stage():
     """
     Tests $match stages
