@@ -194,7 +194,7 @@ def is_valid_stage(stage: ExpressionObject) -> None:
                                   f"but it has type {type(stage)}.")
     key_pairs = stage.items()
     if len(key_pairs) != 1:
-        raise AggregreatTypeError(f"Expected {stage} to be a stage expression, and hence have" +
+        raise AggregreatTypeError(f"Expected {stage} to be a stage expression, and hence have " +
                                   "exactly one key-value pair.")
     stage_type, stage_spec = list(key_pairs)[0]
     is_valid_stage_type(stage_type)

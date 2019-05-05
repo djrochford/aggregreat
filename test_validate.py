@@ -19,8 +19,24 @@ def test_pipeline():
 
     with raises(AggregreatTypeError) as err:
         is_valid_pipeline(bad_pipeline)
-        assert err.value == (f"Expected {bad_pipeline} to be an aggregation pipeline, and hence " +
-                             f"a list, but it has type {type(bad_pipeline)}.")
+    assert str(err.value) == (f"Expected {bad_pipeline} to be an aggregation pipeline, and hence " +
+                              f"a list, but it has type {type(bad_pipeline)}.")
+
+def test_stage():
+    """
+    Test non-stage-specific stage validation.
+    """
+    bad_stage_type = ("$match", {"someField": True})
+    with raises(AggregreatTypeError) as err:
+        is_valid_pipeline([bad_stage_type])
+    assert str(err.value) == (f"Expected {bad_stage_type} to be a stage expression, and hence a " +
+                              f"dict, but it has type {type(bad_stage_type)}.")
+
+    bad_stage_key_values = {"$match": {"someField": True}, "$sort": {"created": -1}}
+    with raises(AggregreatTypeError) as err:
+        is_valid_pipeline([bad_stage_key_values])
+    assert str(err.value) == (f"Expected {bad_stage_key_values} to be a stage expression, and " +
+                              "hence have exactly one key-value pair.")
 
 def test_match_stage():
     """
@@ -76,14 +92,14 @@ def test_match_stage():
     for query in good_queries:
         assert is_valid_pipeline([{"$match": query}]) is True
 
-    bad_bson_value = {"someField": date}
+    bad_bson_value = date.today()
     with raises(AggregreatTypeError) as err:
-        is_valid_pipeline([{"$match": bad_bson_value}])
-        assert err.value == (f"Expected {bad_bson_value} to be a BSON value, but it has " +
-                             f"non-valid type {type(bad_bson_value)}.")
+        is_valid_pipeline([{"$match": {"someField": bad_bson_value}}])
+    assert str(err.value) == (f"Expected {bad_bson_value} to be a BSON value, but it has " +
+                              f"non-valid type {type(bad_bson_value)}.")
 
-    mixed_dollar_keys = {"someField": {"$in": ["dog, cat"], "tree": 2}}
+    mixed_dollar_keys = {"$in": ["dog, cat"], "tree": 2}
     with raises(AggregreatTypeError) as err:
-        is_valid_pipeline([{"$match": mixed_dollar_keys}])
-        assert err.value == (f"Bad dictionary {mixed_dollar_keys}. Cannot mix operator keys " +
-                             "(beginning with '$') with non-operator keys.")
+        is_valid_pipeline([{"$match": {"someField": mixed_dollar_keys}}])
+    assert str(err.value) == (f"Bad dictionary {mixed_dollar_keys}. Cannot mix operator keys " +
+                              "(beginning with '$') with non-operator keys.")
