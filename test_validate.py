@@ -9,6 +9,19 @@ from bson.objectid import ObjectId
 
 from validate import is_valid_pipeline, AggregreatTypeError
 
+def test_pipeline():
+    """
+    Tests top-most pipeline validation.
+    """
+    assert is_valid_pipeline([]) is True
+
+    bad_pipeline = {"$match": {"someField": True}}
+
+    with raises(AggregreatTypeError) as err:
+        is_valid_pipeline(bad_pipeline)
+        assert err.value == (f"Expected {bad_pipeline} to be an aggregation pipeline, and hence " +
+                             f"a list, but it has type {type(bad_pipeline)}.")
+
 def test_match_stage():
     """
     Tests $match stages
